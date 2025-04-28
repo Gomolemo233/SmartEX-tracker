@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Budget</title>
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body */
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            background: url('/static/images/background.jpeg') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            height: 100vh;
+        }
+
+        /* Navbar */
+        nav {
+            background-color: rgba(46, 125, 50, 0.9);
+            padding: 15px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+            justify-content: center;
+        }
+
+        nav ul li {
+            margin: 0 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        nav ul li a:hover {
+            background-color: #388E3C;
+        }
+
+        /* Page Content */
+        .container {
+            margin-top: 100px; /* Avoid overlap with navbar */
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2E7D32;
+        }
+
+        /* Flash Messages */
+        .flash-message {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .flash-message.success {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .flash-message.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        /* Form Container */
+        .form-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .form-section {
+            width: 45%;
+        }
+
+        .form-section h2 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .form-section form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-section label {
+            font-size: 16px;
+        }
+
+        .form-section input, .form-section select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .expense-section {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .expense-section h3 {
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .expense-fields {
+            margin-top: 10px;
+        }
+
+        .expense-fields div {
+            margin-bottom: 10px;
+        }
+
+        .expense-fields input {
+            width: 80%;
+            margin-right: 10px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin-top: 20px;
+        }
+
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .button-container button.cancel {
+            background-color: #f44336;
+        }
+
+        .button-container button:hover {
+            opacity: 0.9;
+        }
+
+        .button-container button.cancel:hover {
+            background-color: #e53935;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .form-section {
+                width: 80%;
+                margin-bottom: 20px;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .button-container button {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('history') }}"> History</a></li>
+            <li><a href="{{ url_for('create_budget') }}">Create New Budget</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+        <h1>Create New Budget</h1>
+
+        <!-- Flash Messages Section -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-container">
+            <!-- Budget Form Section -->
+            <div class="form-section">
+                <h2>Budget Information</h2>
+                <form id="budget-form" action="{{ url_for('create_budget') }}" method="POST">
+                    <div>
+                        <label for="account_limit">Account Limit:</label>
+                        <input type="number" id="account_limit" name="account_limit" required>
+                    </div>
+                    <div>
+                        <label for="month">Month:</label>
+                        <select id="month" name="month" required>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="year">Year:</label>
+                        <select id="year" name="year" required>
+                            <option value="2020">2020</option>
+                            <option value="2021">2021</option>
+                            <option value="2022">2022</option>
+                            <option value="2023">2023</option>
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            <option value="2029">2029</option>
+                            <option value="2030">2030</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="income">Income:</label>
+                        <input type="number" id="income" name="income" required>
+                    </div>
+            </div>
+
+            <!-- Expense Form Section -->
+            <div class="form-section">
+                <h2>Expense Information</h2>
+                <div class="expense-section">
+                    <h3>Expenses</h3>
+                    <div id="expense_fields" class="expense-fields">
+                        <!-- Dynamically added expense fields will appear here -->
+                    </div>
+                    <button type="button" id="add_expense" onclick="addExpenseField()">+ Add Expense</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden field to track total number of expenses -->
+        <input type="hidden" name="total_expenses" id="total_expenses" value="0">
+
+        <div class="button-container">
+            <button type="submit">Save</button>
+            <a href="{{ url_for('dashboard') }}">
+                <button type="button" class="cancel">Back to Dashboard</button>
+            </a>
+        </div>
+
+        </form>
+
+        <!-- JavaScript for dynamically adding expense fields -->
+        <script>
+            let expenseCount = 0;
+
+            // Function to dynamically add expense input fields
+            function addExpenseField() {
+                expenseCount++;
+
+                const expenseDiv = document.createElement('div');
+                expenseDiv.classList.add('expense-field');
+                expenseDiv.innerHTML = `
+                    <div>
+                        <label for="expense_description_${expenseCount}">Expense Description:</label>
+                        <input type="text" id="expense_description_${expenseCount}" name="expense_description_${expenseCount}" required>
+                    </div>
+                    <div>
+                        <label for="expense_amount_${expenseCount}">Expense Amount:</label>
+                        <input type="number" id="expense_amount_${expenseCount}" name="expense_amount_${expenseCount}" required>
+                    </div>
+                `;
+                document.getElementById('expense_fields').appendChild(expenseDiv);
+
+                // Update the total_expenses hidden field value
+                const totalExpensesInput = document.getElementById('total_expenses');
+                totalExpensesInput.value = expenseCount;
+            }
+        </script>
+
+    </div>
+
+</body>
+</html>

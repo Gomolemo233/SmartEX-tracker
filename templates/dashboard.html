@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Personal Finance Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation Menu -->
+   <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('home') }}">Home</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mx-auto"> <!-- Change ml-auto to mx-auto -->
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('history') }}">📖 History</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('create_budget') }}">Create New Budget</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </div>
+</nav>
+
+
+    <div class="container mt-4">
+        <h1>Welcome, {{ first_name }} {{ last_name }}!</h1>
+        <p><strong>SETCoins:</strong> ${{ "{:,.2f}".format(reward_total) }}</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Budget Overview -->
+        <section>
+            <h2>Manage Every Dime With Smart Expense Tracker</h2>
+            {% if latest_budget %}
+                <p><strong>Budget Plan:</strong> ${{ latest_budget['AccountLimit'] }}</p>
+                <p><strong>Month:</strong> {{ latest_budget['MonthName'] }}</p>
+                <p><strong>Year:</strong> {{ latest_budget['Year'] }}</p>
+                <p><strong>Total Spent:</strong> ${{ latest_budget['TotalTransactions'] }}</p>
+                <p><strong>Remaining:</strong> ${{ latest_budget['AccountLimit'] - latest_budget['TotalTransactions'] }}</p>
+            {% else %}
+                <p>No budget information found. Please <a href="{{ url_for('create_budget') }}">create a new budget</a>.</p>
+            {% endif %}
+        </section>
+
+        <!-- Chart Section -->
+        <section class="mt-5">
+            <h2>Budget Summary</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <canvas id="budgetChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <canvas id="categoryChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Expenses List -->
+        <section class="mt-5">
+            <h2>Expenses for this Month's Budget</h2>
+            {% if expenses %}
+                <ul>
+                    {% for expense in expenses %}
+                        <li><strong>{{ expense['Category'] }}:</strong> ${{ expense['Amount'] }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No expenses found for this budget. Please add some expenses.</p>
+            {% endif %}
+        </section>
+
+        <!-- Add Expense Modal -->
+        <section class="mt-4">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addExpenseModal">Add Expense</button>
+
+            <div class="modal fade" id="addExpenseModal" tabindex="-1" role="dialog" aria-labelledby="addExpenseLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addExpenseLabel">Add Expense</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('add_expense') }}" method="POST">
+                                <div class="form-group">
+                                    <label for="expenseCategory">Category:</label>
+                                    <select class="form-control" id="expenseCategory" name="Category" onchange="toggleOtherCategory()" required>
+                                        <option value="">-- Select Category --</option>
+                                        <option value="Groceries">Groceries</option>
+                                        <option value="Car/transport">Car/transport</option>
+                                        <option value="Pocket">Pocket</option>
+                                        <option value="Savings">Savings</option>
+                                        <option value="Housing">Housing</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" id="other-category-group" style="display: none;">
+                                    <label for="OtherCategory">Specify Other Category:</label>
+                                    <input type="text" class="form-control" id="OtherCategory" name="OtherCategory">
+                                </div>
+                                <div class="form-group">
+                                    <label for="expense_amount">Expense Amount:</label>
+                                    <input type="number" class="form-control" id="expense_amount" name="expense_amount" required>
+                                </div>
+                                <input type="hidden" name="budget_id" value="{{ latest_budget['BudgetID'] }}">
+                                <input type="hidden" name="month" value="{{ latest_budget['Month'] }}">
+                                <input type="hidden" name="year" value="{{ latest_budget['Year'] }}">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transactions Table -->
+        <section class="mt-5">
+            <h2>Recent Transactions</h2>
+            {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for txn in transactions %}
+                                <tr>
+                                    <td>{{ txn['Date'] }}</td>
+                                    <td>{{ txn['Category'] }}</td>
+                                    <td>{{ txn['Description'] }}</td>
+                                    <td>{{ txn['Amount'] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No transactions found for this budget.</p>
+            {% endif %}
+        </section>
+        
+        <!-- Add Transaction Modal -->
+        <section class="mt-4">
+            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addTransactionModal">Add Transaction</button>
+
+            <div class="modal fade" id="addTransactionModal" tabindex="-1" role="dialog" aria-labelledby="addTransactionLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addTransactionLabel">Add Transaction</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('add_transaction') }}" method="POST">
+                                <div class="form-group">
+                                    <label for="transaction_amount">Amount:</label>
+                                    <input type="number" class="form-control" id="transaction_amount" name="transaction_amount" step="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transaction_date">Date:</label>
+                                    <input type="date" class="form-control" id="transaction_date" name="transaction_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transactionCategory">Category:</label>
+                                    <select class="form-control" id="transactionCategory" name="Category" required>
+                                        <option value="">-- Select Category --</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category }}">{{ category }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transaction_description">Description:</label>
+                                    <input type="text" class="form-control" id="transaction_description" name="transaction_description" required>
+                                </div>
+                                <input type="hidden" name="budget_id" value="{{ latest_budget['BudgetID'] }}">
+                                <button type="submit" class="btn btn-success">Submit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.0/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- JS: Category Toggle -->
+    <script>
+        function toggleOtherCategory() {
+            var categorySelect = document.getElementById("expenseCategory");
+            var otherCategoryGroup = document.getElementById("other-category-group");
+            if (categorySelect.value === "Other") {
+                otherCategoryGroup.style.display = "block";
+                document.getElementById("OtherCategory").required = true;
+            } else {
+                otherCategoryGroup.style.display = "none";
+                document.getElementById("OtherCategory").required = false;
+            }
+        }
+    </script>
+
+    <!-- JS: Budget Chart -->
+    <script>
+        {% if latest_budget %}
+        const ctx = document.getElementById('budgetChart').getContext('2d');
+        const budgetChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Account Limit', 'Total Spent', 'Remaining'],
+                datasets: [{
+                    label: 'Budget Overview ($)',
+                    data: [
+                        {{ latest_budget['AccountLimit'] | float | tojson }},
+                        {{ latest_budget['TotalTransactions'] | float | tojson }},
+                        {{ (latest_budget['AccountLimit'] - latest_budget['TotalTransactions']) | float | tojson }}
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(75, 192, 192, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Budget Overview' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Amount in $' }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+
+    <script>
+        {% if category_totals %}
+        const ctx2 = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for expense in category_totals %}'{{ expense["Category"] }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Expenses by Category',
+                    data: [{% for expense in category_totals %}{{ expense["TotalAmount"] }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(199, 199, 199, 0.6)'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: { display: true, text: 'Expenses by Category' }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

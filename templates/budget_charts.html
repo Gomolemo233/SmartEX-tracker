@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Budget {{ budget.MonthName }} {{ budget.Year }}</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+
+  <!-- Chart.js 4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+</head>
+<body>
+
+<div class="container my-4">
+
+  <h2 class="mb-3">
+    Budget for {{ budget.MonthName }} {{ budget.Year }}
+  </h2>
+  <p class="text-muted">Account limit: {{ budget.AccountLimit }}</p>
+
+  <!-- ── Expense Pie ───────────────────────────── -->
+  <h4 class="mt-5">Planned Expenses</h4>
+  <div style="max-width: 600px;">
+    <canvas id="expenseChart"></canvas>
+  </div>
+  
+
+  <!-- ── Transaction Bar ───────────────────────── -->
+  <h4 class="mt-5">Actual Spending per Category</h4>
+  <div style="max-width: 700px;">
+    <canvas id="transactionChart"></canvas>
+  </div>
+  
+
+  <a href="{{ url_for('history') }}"
+     class="btn btn-secondary mt-4">← Back to history</a>
+</div>
+
+<!-- Bootstrap 5 JS bundle (optional but handy) -->
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script>
+    /* ---------- pie : planned expenses ---------- */
+    new Chart(
+      document.getElementById('expenseChart'),
+      {
+        type: 'pie',
+        data: {
+          labels: {{ expenses | map(attribute='Category') | list | tojson | safe }},
+          datasets: [{
+            label: 'Planned',
+            data: {{ expenses | map(attribute='Amount') | list | tojson | safe }},
+            backgroundColor: [
+              '#4e79a7', '#f28e2c', '#e15759', '#76b7b2',
+              '#59a14f', '#edc949', '#af7aa1', '#ff9da7'
+            ]
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      }
+    );
+    
+    /* ---------- bar : transactions ---------- */
+    new Chart(
+      document.getElementById('transactionChart'),
+      {
+        type: 'bar',
+        data: {
+          labels: {{ transactions | map(attribute='Category') | list | tojson | safe }},
+          datasets: [{
+            label: 'Total Spent',
+            data: {{ transactions | map(attribute='Total') | list | tojson | safe }},
+            backgroundColor: '#4e79a7'
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      }
+    );
+    </script>
+    
+</body>
+</html>

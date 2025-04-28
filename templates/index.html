@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Smart Expense Tracker</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Link to your static CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <ul>
+            <li><a href="/"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="/aboutus"><i class="fas fa-users"></i> About Us</a></li>
+            <li><a href="/contactus"><i class="fas fa-envelope"></i> Contact Us</a></li>
+            <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Welcome to Smart Expense Tracker</h1>
+        <p>Take control of your money, one step at a time.</p>
+        <a href="/signup" class="button">Get Started</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Smart Expense Tracker. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
