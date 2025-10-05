@@ -401,7 +401,7 @@ def add_transaction():
         """, (description, category, amount, date, budget_id))
         db.commit()
 
-        # 5. Update total transactions in Budget table
+        # 5. Update total transactions in Budget table and shows result
         cursor.execute("""
             SELECT SUM(Amount) as Total FROM "Transaction"
             WHERE BudgetID = ?
